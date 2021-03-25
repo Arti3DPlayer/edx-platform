@@ -19,8 +19,11 @@ from organizations.tests.factories import OrganizationFactory
 from pytz import UTC
 from social_django.models import UserSocialAuth
 
+from openedx.core.djangoapps.catalog.utils import get_course_uuid_for_course
 from common.djangoapps.course_modes.models import CourseMode
 from common.djangoapps.course_modes.tests.factories import CourseModeFactory
+from common.djangoapps.entitlements.models import CourseEntitlement
+from common.djangoapps.entitlements.tests.factories import CourseEntitlementFactory
 from common.djangoapps.student.models import (
     ENROLLED_TO_ENROLLED,
     CourseEnrollment,
@@ -304,8 +307,17 @@ class SupportViewEnrollmentsTests(SharedModuleStoreTestCase, SupportViewTestCase
 
     @disable_signal(signals, 'post_save')
     @ddt.data('username', 'email')
-    def test_change_enrollment(self, search_string_type):
+    @patch("common.djangoapps.entitlements.models.get_course_uuid_for_course")
+    def test_change_enrollment(self, search_string_type, mock_get_course_uuid):
         assert ManualEnrollmentAudit.get_manual_enrollment_by_email(self.student.email) is None
+        enrollment = CourseEnrollment.get_enrollment(self.student, self.course.id)
+        entitlement = CourseEntitlementFactory.create(
+            user=self.user,
+            mode=CourseMode.VERIFIED,
+            enrollment_course_run=enrollment
+        )
+        mock_get_course_uuid.return_value = entitlement.course_uuid
+
         url = reverse(
             'support:enrollment_list',
             kwargs={'username_or_email': getattr(self.student, search_string_type)}
@@ -316,8 +328,11 @@ class SupportViewEnrollmentsTests(SharedModuleStoreTestCase, SupportViewTestCase
             'new_mode': CourseMode.VERIFIED,
             'reason': 'Financial Assistance'
         })
+        entitlement.refresh_from_db()
         assert response.status_code == 200
         assert ManualEnrollmentAudit.get_manual_enrollment_by_email(self.student.email) is not None
+        assert entitlement.enrollment_course_run is not None
+        assert entitlement.is_entitlement_redeemable() is False
         self.assert_enrollment(CourseMode.VERIFIED)
 
     @ddt.data(
