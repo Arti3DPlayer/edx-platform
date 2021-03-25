@@ -19,10 +19,8 @@ from organizations.tests.factories import OrganizationFactory
 from pytz import UTC
 from social_django.models import UserSocialAuth
 
-from openedx.core.djangoapps.catalog.utils import get_course_uuid_for_course
 from common.djangoapps.course_modes.models import CourseMode
 from common.djangoapps.course_modes.tests.factories import CourseModeFactory
-from common.djangoapps.entitlements.models import CourseEntitlement
 from common.djangoapps.entitlements.tests.factories import CourseEntitlementFactory
 from common.djangoapps.student.models import (
     ENROLLED_TO_ENROLLED,
