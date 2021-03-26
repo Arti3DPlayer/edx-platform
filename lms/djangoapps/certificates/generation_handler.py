@@ -454,7 +454,7 @@ def regenerate_user_certificates(student, course_key, course=None,
     if can_generate_certificate_task(student, course_key):
         log.info(f'{course_key} is using V2 certificate. Attempt will be made to regenerate a V2 certificate for '
                  f'user {student.id}.')
-        return generate_allowlist_certificate_task(student, course_key)
+        return generate_certificate_task(student, course_key)
 
     xqueue = XQueueCertInterface()
     if insecure:
