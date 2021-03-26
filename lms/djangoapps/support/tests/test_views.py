@@ -305,8 +305,26 @@ class SupportViewEnrollmentsTests(SharedModuleStoreTestCase, SupportViewTestCase
 
     @disable_signal(signals, 'post_save')
     @ddt.data('username', 'email')
+    def test_change_enrollment(self, search_string_type):
+        self.assertIsNone(ManualEnrollmentAudit.get_manual_enrollment_by_email(self.student.email))
+        url = reverse(
+            'support:enrollment_list',
+            kwargs={'username_or_email': getattr(self.student, search_string_type)}
+        )
+        response = self.client.post(url, data={
+            'course_id': six.text_type(self.course.id),
+            'old_mode': CourseMode.AUDIT,
+            'new_mode': CourseMode.VERIFIED,
+            'reason': 'Financial Assistance'
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertIsNotNone(ManualEnrollmentAudit.get_manual_enrollment_by_email(self.student.email))
+        self.assert_enrollment(CourseMode.VERIFIED)
+
+    @disable_signal(signals, 'post_save')
+    @ddt.data('username', 'email')
     @patch("common.djangoapps.entitlements.models.get_course_uuid_for_course")
-    def test_change_enrollment(self, search_string_type, mock_get_course_uuid):
+    def test_change_enrollment_mode_fullfills_entitlement(self, search_string_type, mock_get_course_uuid):
         assert ManualEnrollmentAudit.get_manual_enrollment_by_email(self.student.email) is None
         enrollment = CourseEnrollment.get_enrollment(self.student, self.course.id)
         entitlement = CourseEntitlementFactory.create(
