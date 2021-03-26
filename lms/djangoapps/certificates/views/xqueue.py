@@ -17,6 +17,7 @@ from common.djangoapps.util.json_request import JsonResponse, JsonResponseBadReq
 from common.djangoapps.util.request_rate_limiter import BadRequestRateLimiter
 from lms.djangoapps.certificates.api import (
     can_generate_certificate_task,
+    generate_certificate_task,
     generate_user_certificates
 )
 from lms.djangoapps.certificates.models import (
