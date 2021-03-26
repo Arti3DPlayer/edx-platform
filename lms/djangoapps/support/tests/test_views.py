@@ -306,19 +306,19 @@ class SupportViewEnrollmentsTests(SharedModuleStoreTestCase, SupportViewTestCase
     @disable_signal(signals, 'post_save')
     @ddt.data('username', 'email')
     def test_change_enrollment(self, search_string_type):
-        self.assertIsNone(ManualEnrollmentAudit.get_manual_enrollment_by_email(self.student.email))
+        assert ManualEnrollmentAudit.get_manual_enrollment_by_email(self.student.email) is None
         url = reverse(
             'support:enrollment_list',
             kwargs={'username_or_email': getattr(self.student, search_string_type)}
         )
         response = self.client.post(url, data={
-            'course_id': six.text_type(self.course.id),
+            'course_id': str(self.course.id),
             'old_mode': CourseMode.AUDIT,
             'new_mode': CourseMode.VERIFIED,
             'reason': 'Financial Assistance'
         })
-        self.assertEqual(response.status_code, 200)
-        self.assertIsNotNone(ManualEnrollmentAudit.get_manual_enrollment_by_email(self.student.email))
+        assert response.status_code == 200
+        assert ManualEnrollmentAudit.get_manual_enrollment_by_email(self.student.email) is not None
         self.assert_enrollment(CourseMode.VERIFIED)
 
     @disable_signal(signals, 'post_save')
