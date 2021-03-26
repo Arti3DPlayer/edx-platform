@@ -70,13 +70,6 @@ class CourseHomeMetadataView(RetrieveAPIView):
         course_key = CourseKey.from_string(course_key_string)
         original_user_is_staff = has_access(request.user, 'staff', course_key).has_access
 
-        _, request.user = setup_masquerade(
-            request,
-            course_key,
-            staff_access=has_access(request.user, 'staff', course_key),
-            reset_masquerade_data=True,
-        )
-
         course = course_detail(request, request.user.username, course_key)
         user_is_enrolled = CourseEnrollment.is_enrolled(request.user, course_key_string)
         browser_timezone = request.query_params.get('browser_timezone', None)
@@ -88,6 +81,13 @@ class CourseHomeMetadataView(RetrieveAPIView):
 
         courseware_meta = CoursewareMeta(course_key, request, request.user.username)
         can_load_courseware = courseware_meta.is_microfrontend_enabled_for_user()
+
+        _, request.user = setup_masquerade(
+            request,
+            course_key,
+            staff_access=has_access(request.user, 'staff', course_key),
+            reset_masquerade_data=True,
+        )
 
         data = {
             'course_id': course.id,
